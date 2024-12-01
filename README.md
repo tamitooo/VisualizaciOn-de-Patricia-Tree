@@ -1,4 +1,4 @@
-﻿# Visualizacion-de-Patricia-Tree-phyton (python)
+﻿# Visualizacion-de-Patricia-Tree-phyton
 Este proyecto proporciona una interfaz gráfica de usuario (GUI) para visualizar un **Árbol Patricia**. El árbol se puede modificar dinámicamente insertando, buscando y eliminando claves.
 
 ## Características
