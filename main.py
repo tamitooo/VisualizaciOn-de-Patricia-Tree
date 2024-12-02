@@ -13,17 +13,21 @@ class PatriciaTree:
                 common_prefix = self._get_common_prefix(key, prefix)
                 if common_prefix:
                     if common_prefix == prefix:
+                        # Prefijo coincide, moverse al siguiente nivel
                         current_node = child
                         key = key[len(prefix):]
                         break
                     else:
+                        # Dividir el nodo actual
                         remaining_prefix = prefix[len(common_prefix):]
-                        current_node[common_prefix] = {remaining_prefix: child}
+                        new_child = child
+                        current_node[common_prefix] = {remaining_prefix: new_child}
                         del current_node[prefix]
                         current_node = current_node[common_prefix]
                         key = key[len(common_prefix):]
                         break
             else:
+                # No hay prefijo común, añadir la clave restante
                 current_node[key] = {}
                 break
 
