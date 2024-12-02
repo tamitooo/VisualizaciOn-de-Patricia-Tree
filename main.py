@@ -1,93 +1,78 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from tkinter import Tk, Label, Entry, Button, Canvas, StringVar
-
+from tkinter import Tk, Button, Entry, Label
 
 class PatriciaTree:
     def __init__(self):
         self.tree = {}
 
     def insert(self, key):
-        node = self.tree
-        for char in key:
-            if char not in node:
-                node[char] = {}
-            node = node[char]
-        node["*"] = True
+        current_node = self.tree
+        while True:
+            for prefix, child in current_node.items():
+                common_prefix = self._get_common_prefix(key, prefix)
+                if common_prefix:
+                    if common_prefix == prefix:
+                        current_node = child
+                        key = key[len(prefix):]
+                        break
+                    else:
+                        remaining_prefix = prefix[len(common_prefix):]
+                        current_node[common_prefix] = {remaining_prefix: child}
+                        del current_node[prefix]
+                        current_node = current_node[common_prefix]
+                        key = key[len(common_prefix):]
+                        break
+            else:
+                current_node[key] = {}
+                break
 
-    def search(self, key):
-        node = self.tree
-        for char in key:
-            if char not in node:
-                return False
-            node = node[char]
-        return "*" in node
+    def _get_common_prefix(self, str1, str2):
+        i = 0
+        while i < len(str1) and i < len(str2) and str1[i] == str2[i]:
+            i += 1
+        return str1[:i]
 
-    def delete(self, key):
-        def helper(node, key, depth):
-            if depth == len(key):
-                if "*" in node:
-                    del node["*"]
-                    return len(node) == 0
-                return False
-            char = key[depth]
-            if char in node and helper(node[char], key, depth + 1):
-                del node[char]
-                return len(node) == 0
-            return False
+    def visualize(self):
+        graph = nx.DiGraph()
 
-        helper(self.tree, key, 0)
+        def add_edges(node, parent_label):
+            for label, child in node.items():
+                graph.add_edge(parent_label, parent_label + label)
+                add_edges(child, parent_label + label)
 
-
-
-class PatriciaTreeApp:
-    def __init__(self, root):
-        self.tree = PatriciaTree()
-        self.root = root
-        self.root.title("Patricia Tree Visualizer")
-        self.canvas = Canvas(root, width=0, height=0, bg="white")
-        self.canvas.pack()
-        self.key_var = StringVar()
-
-        Label(root, text="Clave:").pack()
-        Entry(root, textvariable=self.key_var).pack()
-        Button(root, text="Insertar", command=self.insert_key).pack()
-        Button(root, text="Buscar", command=self.search_key).pack()
-        Button(root, text="Eliminar", command=self.delete_key).pack()
-
-    def draw_tree(self):
-        self.canvas.delete("all")
-        G = nx.DiGraph()
-
-        def add_edges(node, parent, prefix=""):
-            for char, subtree in node.items():
-                if char != "*":
-                    G.add_edge(prefix, prefix + char)
-                    add_edges(subtree, prefix + char, prefix + char)
-
-        add_edges(self.tree.tree, "")
-
-        pos = nx.spring_layout(G, seed=42)
-        nx.draw(G, pos, ax=plt.gca(), with_labels=True, node_color="lightblue", node_size=500, font_size=10)
+        add_edges(self.tree, "")
+        pos = nx.spring_layout(graph)
+        plt.figure(figsize=(8, 6))
+        nx.draw(graph, pos, with_labels=True, node_color="lightblue", node_size=700, font_size=10)
+        plt.title("Visualización del Patricia Tree")
         plt.show()
 
-    def insert_key(self):
-        key = self.key_var.get()
-        self.tree.insert(key)
-        self.draw_tree()
+# Interfaz Gráfica
+def main():
+    ptree = PatriciaTree()
 
-    def search_key(self):
-        key = self.key_var.get()
-        found = self.tree.search(key)
-        Label(self.root, text=f"Clave {'encontrada' if found else 'no encontrada'}").pack()
+    def add_key():
+        key = entry_key.get()
+        if key:
+            ptree.insert(key)
+            label_status.config(text=f"Clave '{key}' añadida.")
+            ptree.visualize()
+        else:
+            label_status.config(text="Por favor, introduce una clave.")
 
-    def delete_key(self):
-        key = self.key_var.get()
-        self.tree.delete(key)
-        self.draw_tree()
+    root = Tk()
+    root.title("Patricia Tree Visualizer")
 
+    Label(root, text="Clave:").grid(row=0, column=0)
+    entry_key = Entry(root)
+    entry_key.grid(row=0, column=1)
+
+    Button(root, text="Añadir Clave", command=add_key).grid(row=1, column=0, columnspan=2)
+    label_status = Label(root, text="")
+    label_status.grid(row=2, column=0, columnspan=2)
+
+    root.mainloop()
 
 if __name__ == "__main__":
-    root = Tk()
-    app = PatriciaTreeApp(root)
-    root.mainloop()
+    main()
